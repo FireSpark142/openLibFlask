@@ -20,6 +20,7 @@ app.config.update(SECRET_KEY=os.urandom(24))
 app.config.from_object(__name__)
 Session(app)
 
+
 @app.route('/', methods=['GET', 'POST'])
 def main():
     z = SearchForm(request.form).search.data
@@ -29,36 +30,62 @@ def main():
 
     return render_template('index.html')
 
+
 @app.route('/results')
 def search_results(data):
     df = pd.DataFrame(data.json())
     dfd = df['docs'].to_dict()
     df2 = pd.DataFrame(dfd).T
-    cols = [df2['title'], df2['first_publish_year'], df2['author_name'], df2['isbn']]
+    cols = [df2['key'], df2['title'], df2['first_publish_year'], df2['author_name'], df2['isbn']]
     df3 = pd.DataFrame(cols).T
     df3 = df3.dropna()
     ls = []
+    ls2 = []
+    ls3 = []
     for i in df3['isbn']:
         rf = 'https://covers.openlibrary.org/b/isbn/' + str(i[0]) + '-M.jpg'
         ls.append(rf)
 
-    df4 = pd.DataFrame(ls, columns=["url"])
+    for i in df3['key']:
+        var = 'https://openlibrary.org' + i
+        ls2.append(var)
+
+    for i in df3['isbn']:
+        if type(i) == list:
+            ls3.append(i[0])
+        else:
+            var2 = list(i)
+            print(var2)
+
+    print(ls3)
+
+    df3.drop(columns='isbn', inplace=True)
+
+    df9 = pd.DataFrame(ls3, columns=["isbn"])
+
+    df8 = pd.DataFrame(ls2, columns=["url"])
+    df4 = pd.DataFrame(ls, columns=["photo"])
     data = pd.DataFrame(list(df3['first_publish_year']), columns=["first_publish_year"])
 
     hist, edges = np.histogram(data, bins=10)
 
     df6 = pd.DataFrame({'first_publish_year': hist,
-                           'left': edges[:-1],
-                           'right': edges[1:]})
-    df7 = pd.concat([df4,df3], axis=1)
-    df7 = df7.dropna(how='any',axis=0)
-    ls=[]
+                        'left': edges[:-1],
+                        'right': edges[1:]})
+    df7 = pd.concat([df4, df8, df3, df9], axis=1)
+    ls = []
     for i in df7['author_name']:
-        ls.append(i[0])
+        if type(i) == list:
+            ls.append(i[0])
+        else:
+            ls.append(i)
 
     df7.drop(columns='author_name', inplace=True)
 
     df7['author_name'] = ls
+
+    df7.drop(columns='key', inplace=True
+             )
 
     src = ColumnDataSource(df6)
 
