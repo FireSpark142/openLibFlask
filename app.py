@@ -57,8 +57,6 @@ def search_results(data):
             var2 = list(i)
             print(var2)
 
-    print(ls3)
-
     df3.drop(columns='isbn', inplace=True)
 
     df9 = pd.DataFrame(ls3, columns=["isbn"])
